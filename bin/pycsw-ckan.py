@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ConfigParser
+import configparser
 import getopt
 import json
 import logging
@@ -65,14 +65,14 @@ COMMAND = None
 CFG = None
 
 if len(sys.argv) == 1:
-    print usage()
+    print(usage())
     sys.exit(1)
 
 try:
     OPTS, ARGS = getopt.getopt(sys.argv[1:], 'c:f:ho:p:ru:x:s:t:y')
 except getopt.GetoptError as err:
-    print '\nERROR: %s' % err
-    print usage()
+    print('\nERROR: %s' % err)
+    print(usage())
     sys.exit(2)
 
 for o, a in OPTS:
@@ -81,10 +81,10 @@ for o, a in OPTS:
     if o == '-f':
         CFG = a
     if o == '-h':  # dump help and exit
-        print usage()
+        print(usage())
         sys.exit(3)
 
-SCP = ConfigParser.SafeConfigParser()
+SCP = configparser.SafeConfigParser()
 SCP.readfp(open(CFG))
 
 DATABASE = SCP.get('repository', 'database')
@@ -92,7 +92,7 @@ URL = SCP.get('server', 'url')
 METADATA = dict(SCP.items('metadata:main'))
 try:
     TABLE = SCP.get('repository', 'table')
-except ConfigParser.NoOptionError:
+except configparser.NoOptionError:
     TABLE = 'records'
 CKAN_URL = SCP.get('defaults', 'ckan_url')
 
@@ -155,7 +155,7 @@ def get_record(client, context, repo, ckan_url, ckan_id, ckan_info):
         except:
             log.debug('parsing XML with .encode("utf8")')
             xml = etree.parse(io.BytesIO(content.encode("utf8")))
-    except Exception, err:
+    except Exception as err:
         log.exception('Could not pass xml doc from %s', ckan_id)
         return
 
@@ -187,7 +187,7 @@ def get_record(client, context, repo, ckan_url, ckan_id, ckan_info):
                     value.text = ckan_id
             record.xml = etree.tostring(xml)
 
-    except Exception, err:
+    except Exception as err:
         log.exception('Could not extract metadata from %s', ckan_id)
         return
 
@@ -201,11 +201,11 @@ def get_record(client, context, repo, ckan_url, ckan_id, ckan_info):
 
 
 if COMMAND is None:
-    print '-c <command> is a required argument'
+    print('-c <command> is a required argument')
     sys.exit(4)
 
 if COMMAND not in ['setup_db', 'load', 'set_keywords']:
-    print 'ERROR: invalid command name: %s' % COMMAND
+    print('ERROR: invalid command name: %s' % COMMAND)
     sys.exit(5)
 
 if COMMAND == 'setup_db':
@@ -220,9 +220,9 @@ if COMMAND == 'setup_db':
                 create_plpythonu_functions=False,
                 extra_columns=ckan_columns)
     except Exception as err:
-        print err
-        print 'ERROR: DB creation error.  Database tables already exist'
-        print 'Delete tables or database to reinitialize'
+        print(err)
+        print('ERROR: DB creation error.  Database tables already exist')
+        print('Delete tables or database to reinitialize')
 
     # create system_info table
     engine = create_engine(DATABASE)
@@ -239,8 +239,8 @@ if COMMAND == 'setup_db':
         system_info.create()
         engine.execute("INSERT INTO system_info VALUES('keywords', '');")
     except Exception as err:
-        print err
-        print 'ERROR: DB creation error.  Database tables already exist'
+        print(err)
+        print('ERROR: DB creation error.  Database tables already exist')
 
 elif COMMAND == 'load':
     engine = create_engine(DATABASE)
@@ -376,7 +376,7 @@ elif COMMAND == 'load':
 
         listing = response.json()
         if not isinstance(listing, dict):
-            raise RuntimeError, 'Wrong API response: %s' % listing
+            raise RuntimeError('Wrong API response: %s' % listing)
         results = listing.get('results')
         if not results:
             # We're done!
@@ -449,12 +449,12 @@ elif COMMAND == 'set_keywords':
     """set pycsw service metadata keywords from top limit CKAN tags"""
     limit = 20
 
-    print 'Fetching tags from %s' % CKAN_URL
+    print('Fetching tags from %s' % CKAN_URL)
     url = CKAN_URL + '/api/action/package_search?facet.field=["tags"]&rows=0&facet.limit=%s' % limit
     response = requests.get(url)
     tags = response.json()['result']['facets']['tags']
 
-    print 'Deriving top %d tags' % limit
+    print('Deriving top %d tags' % limit)
     # uniquify and sort by top limit
     tags_sorted = sorted(tags, key=tags.__getitem__, reverse=True)
     tags_trimmed = [x for x in tags_sorted if x != '']
@@ -463,6 +463,6 @@ elif COMMAND == 'set_keywords':
     from sqlalchemy import create_engine
     engine = create_engine(DATABASE)
     engine.execute("UPDATE system_info SET value='%s' WHERE key='keywords'" % keywords)
-    print 'Tags saved to system_info table.'
+    print('Tags saved to system_info table.')
 
-print 'Done'
+print('Done')
