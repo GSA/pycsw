@@ -7,5 +7,5 @@ ignore:
         reason: >-
           No remediation available yet; Changed to Medium severity. Not affecting us
           since no untrusted yaml input is processed.
-        expires: 2020-11-13T06:00:00.000Z
+        expires: 2020-12-30T06:00:00.000Z
 patch: {}
